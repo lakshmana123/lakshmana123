@@ -1,0 +1,298 @@
+#!/bin/bash
+
+yoctoutor/
+	sources/
+
+
+	build/
+
+
+
+ubuntu2020.iso
+	bootloader + kernel +rootfs
+
+x86	grub	+ linux + rootfs
+
+arm 	uboot	+ linux + rootfs
+
+bios 
+	ubuntu.iso
+
+	windows.iso
+
+
+
+what happend when you run bitbake
+
+bitbake core-image-minimal
+*************
+1. btbake search all bb files using build/conf/bblayer.conf
+
+	core-image-minimal*.bb
+2. bitabke opens build/conf/local.conf to find MACHINE to check which arch i neeed to compile
+
+3. bitbake compile arm toolchain
+4. bitbake search for uboot in tmp/deploy/images/$MACHINE if not present it will compile
+
+5. bitbake search for kernel (linux(zImage|Image|vmlinuz)) image  if not present it will compile
+6. bitbake compiles core-image-minimal.bb(all rootfs packages hello.bb openssh.bb python.bb )
+	bitbake excuttes some tasks
+
+do_fetch()	# SRC_URI 
+	download files and kept in build/downloads  
+do_unpack()
+	it will extract fiiles from downloads to WORKDIR=/build/tmp/work/cortex*/PN/PV/
+do_patch()
+	
+do_compile()
+	
+do_install()
+do_QA()
+do_pakage()
+.
+.
+.
+i******************************************************
+
+hello.c
+hello-1.0.bb
+-----------
+intarnet|local
+
+SRC_URI="file://hello.c"
+
+internet
+git
+	SRC_URI ="git://github.com/stephane/libmodbus.git"
+
+https:|ftp:
+	SRC_URI="https://github.com/stephane/libmodbus/releases/download/v3.1.5/libmodbus-3.1.5.tar.gz"
+
+
+
+*******************
+create meta-layer
+***************
+cd build
+run setup envoirment
+bitbake-layers --help
+bitbake-layers create-layer meta-continental
+
+dell@gigabyte:/mnt/1tb/yocto/gen-yocto/build/meta-continental$ tree
+.
+├── conf
+│   └── layer.conf
+├── COPYING.MIT
+├── README
+└── recipes-example
+    └── helloc
+        └── hello.c
+
+bb file syntax:
+***************
+DESCRIPTION=""
+LICENSE=""
+SRC_URI=""
+S="${WORKDIR}"
+do_compile(){
+}
+do_install(){
+
+}
+**********
+
+
+
+
+hello.c
+
+PN_PV.bb
+hello_1.0.bb			PN=hello	PV=1.0
+
+
+
+
+
+Assignments:
+
+***************
+1. create mwta-layer
+2. write bb files for
+	hello.bb 	for hello.c
+	hellocpp.bb	for hellocpp.cpp
+	hellomake.bb	for hellomake.c Makefile
+	hellocmake.bb	for hellocmake.cpp Cmakefile.list
+	helloconf.bb	for hello.c configure.ac Makefile
+	hellolib.bb	fir libhello.c Makefile
+
+.
+├── conf
+│   └── layer.conf
+├── COPYING.MIT
+├── README
+└── recipes-example
+    └── helloc
+        ├── files
+        │   └── hello.c
+        └── hello_1.0.bb
+
+
+.
+├── conf
+│   └── layer.conf
+├── COPYING.MIT
+├── README
+└── recipes-example
+    ├── helloc
+    │   ├── files
+    │   │   └── hello.c
+    │   └── hello_1.0.bb
+    ├── hellocmake
+    │   ├── Cmakefiles.list
+    │   ├── hellocmake.bb
+    │   └── hellocmake.cpp
+    ├── hellocpp
+    │   ├── hellocpp.bb
+    │   └── hellocpp.cpp
+    └── hellomake
+        ├── hellomake.bb
+        └── hellomake.c
+		
+
+*************************************************
+libmodbus_3.1.4.bb
+------------------
+DESCRIPTION=""
+LICRNSE=""
+SRC_URI=""
+S="${WORKDIR}"
+
+do-compile(){
+
+}
+do_install(0{
+
+}
+---------------------------------------
+
+if you are using git protocol
+
+
+LIC_FILES_CHKSUM=""		to get the lice file
+SRCREV=""			to select the git version
+
+
+-----------------------------------------
+
+DESCRIPTION="recipew for lib modbus"
+
+LICENSE="GPLv2"
+LIC_FILES_CHKSUM="file://COPYING.LESSER;md5=4fbd65380cdd255951079008b364516c"
+SRC_URI="git://github.com/stephane/libmodbus.git;protocol=https"
+SRCREV="81cc4a7e5389405c35d4ebc8173b07654160e834"
+
+S="${WORKDIR}/git"
+
+do_compile(){
+	cd ${S}
+	./autogen.sh
+	./configure --prefix=/usr --host=arm-poky-linux-gnueabi
+	make
+}
+
+do_install(){
+	make install DESTDIR="${D}"
+}
+********************************************************************
+
+mbpoll bb file for 1.4
+-----------------------
+mbpoll_1.4.bb
+-------------
+DESCRIPTION="mb poll recipe"
+
+LICENSE="GPLv3"
+LIC_FILES_CHKSUM="file://COPYING;md5=1ebbd3e34237af26da5dc08a4e440464"
+SRC_URI="git://github.com/epsilonrt/mbpoll.git;protocol=https"
+SRCREV="81af8ba119d50e63a6c2c2a5eb51a24c97f83a07"
+
+S="${WORKDIR}/git"
+
+do_compile(){
+	cd ${S}
+	mkdir -p build 
+	cd build
+	cmake ..
+	make
+}
+
+do_install(){
+	cd ${S}/build
+	make install DESTDIR="${D}"
+}
+-------------------------
+using inc file 
+********************************************************************************
+dell@gigabyte:/mnt/1tb/yocto/gen-yocto/build/meta-continental/recipes-devtolls/libmodbus$ ls
+libmodbus_3.1.3.bb  libmodbus_3.1.4.bb  libmodbus_3.1.5.bb  libmodbus.inc
+dell@gigabyte:/mnt/1tb/yocto/gen-yocto/build/meta-continental/recipes-devtolls/libmodbus$ cat libmodbus_3.1.3.bb
+
+
+include libmodbus.inc
+
+SRCREV="81cc4a7e5389405c35d4ebc8173b07654160e834"
+
+dell@gigabyte:/mnt/1tb/yocto/gen-yocto/build/meta-continental/recipes-devtolls/libmodbus$ cat libmodbus_3.1.4.bb
+
+include libmodbus.inc
+
+SRCREV="f9358460ee1f62bcac716ad0444b3bbe7628b204"
+
+dell@gigabyte:/mnt/1tb/yocto/gen-yocto/build/meta-continental/recipes-devtolls/libmodbus$ libmodbus.inc
+libmodbus.inc: command not found
+dell@gigabyte:/mnt/1tb/yocto/gen-yocto/build/meta-continental/recipes-devtolls/libmodbus$ cat libmodbus.inc
+DESCRIPTION="recipew for lib modbus"
+
+LICENSE="GPLv2"
+LIC_FILES_CHKSUM="file://COPYING.LESSER;md5=4fbd65380cdd255951079008b364516c"
+SRC_URI="git://github.com/stephane/libmodbus.git;protocol=https"
+
+S="${WORKDIR}/git"
+
+do_compile(){
+        cd ${S}
+        ./autogen.sh
+        ./configure --prefix=/usr --host=arm-poky-linux-gnueabi
+        make
+}
+
+do_install(){
+        make install DESTDIR="${D}"
+}
+
+********************************************************************
+
+
+
+
+
+
+Assignments:
+***********
+1. upgrade libmosbus from 3.1.3 to  3.1.4  
+2. upgrade libmodbus from 3.1.4 to 3.1.5
+3. write bb file for mbpoll 1.4
+4. upfgrade mbpoll bb file from 1.4 to 1.5
+5. use inc files to reduce sizes of libmodbus and mbpoll
+6. create core-image-continental.bb
+	# take reference from poky/meta/recipes-core/images/core-image-minimal.bb
+
+
+
+
+
+
+
+
+
+
